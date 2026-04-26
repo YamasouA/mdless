@@ -239,6 +239,74 @@ func TestHistoryBackForwardLoadsSavedPages(t *testing.T) {
 	}
 }
 
+func TestViewShowsEnterLinkTarget(t *testing.T) {
+	m := NewModel(render.Page{
+		Path:    "a.md",
+		Content: []string{"home"},
+		Links:   []nav.Link{{Text: "Next", Target: "next.md"}},
+	}, func(path string) (render.Page, error) {
+		return render.Page{Path: path, Content: []string{path}}, nil
+	})
+
+	view := m.View()
+
+	if !strings.Contains(view, "enter: Next -> next.md") {
+		t.Fatalf("View() does not show enter link target: %q", view)
+	}
+}
+
+func TestViewKeepsEnterLinkTargetAfterReloadStatus(t *testing.T) {
+	m := NewModel(render.Page{
+		Path:    "a.md",
+		Content: []string{"home"},
+		Links:   []nav.Link{{Text: "Next", Target: "next.md"}},
+	}, func(path string) (render.Page, error) {
+		return render.Page{Path: path, Content: []string{path}}, nil
+	})
+	m.Status = "reloaded"
+
+	view := m.View()
+
+	if !strings.Contains(view, "reloaded") {
+		t.Fatalf("View() does not show reload status: %q", view)
+	}
+	if !strings.Contains(view, "enter: Next -> next.md") {
+		t.Fatalf("View() does not keep enter link target: %q", view)
+	}
+}
+
+func TestEnterWithNoLinksShowsStatus(t *testing.T) {
+	m := testModel(render.Page{Path: "a.md", Content: []string{"home"}})
+
+	m = press(m, "enter")
+
+	if got := m.Mode; got != ModeView {
+		t.Fatalf("Mode = %v, want ModeView", got)
+	}
+	if got := m.Status; got != "no links" {
+		t.Fatalf("Status = %q, want no links", got)
+	}
+}
+
+func TestOOpensLinkListInViewMode(t *testing.T) {
+	m := NewModel(render.Page{
+		Path:    "a.md",
+		Content: []string{"home"},
+		Links:   []nav.Link{{Text: "Next", Target: "next.md"}},
+	}, func(path string) (render.Page, error) {
+		return render.Page{Path: path, Content: []string{path}}, nil
+	})
+
+	m = press(m, "o")
+
+	if got := m.Mode; got != ModeLinks {
+		t.Fatalf("Mode = %v, want ModeLinks", got)
+	}
+	if got := m.currentTab().Page.Path; got != "a.md" {
+		t.Fatalf("Path = %q, want a.md", got)
+	}
+}
+
 func TestOpenLinkInNewTab(t *testing.T) {
 	pages := map[string]render.Page{
 		"a.md": {

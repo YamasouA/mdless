@@ -86,12 +86,7 @@ func (m Model) handleViewKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "N":
 		m.moveMatch(-1)
 	case "o":
-		if len(m.currentTab().Page.Links) == 0 {
-			m.Status = "no links"
-			return m, nil
-		}
-		m.Mode = ModeLinks
-		m.LinkIndex = 0
+		m.openLinkList()
 	case "enter":
 		return m, m.openLink(0, false)
 	case "t":
@@ -104,6 +99,15 @@ func (m Model) handleViewKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.closeCurrentTab()
 	}
 	return m, nil
+}
+
+func (m *Model) openLinkList() {
+	if len(m.currentTab().Page.Links) == 0 {
+		m.Status = "no links"
+		return
+	}
+	m.Mode = ModeLinks
+	m.LinkIndex = 0
 }
 
 func (m Model) handleSearchKey(msg tea.KeyMsg) Model {
@@ -223,7 +227,11 @@ func (m *Model) scrollToLine(line int) {
 func (m *Model) openLink(index int, newTab bool) tea.Cmd {
 	tab := m.currentTab()
 	if index < 0 || index >= len(tab.Page.Links) {
-		m.Status = "no link"
+		if len(tab.Page.Links) == 0 {
+			m.Status = "no links"
+		} else {
+			m.Status = "no link"
+		}
 		m.Mode = ModeView
 		return nil
 	}

@@ -127,5 +127,9 @@ func (m Model) renderStatus() string {
 	if m.Status != "" && m.Mode != ModeSearch {
 		status += " | " + m.Status
 	}
+	if m.Mode == ModeView && len(tab.Page.Links) > 0 {
+		link := tab.Page.Links[0]
+		status += fmt.Sprintf(" | enter: %s -> %s", link.Text, link.Target)
+	}
 	return ui.Footer.Width(m.Width).Render(status)
 }

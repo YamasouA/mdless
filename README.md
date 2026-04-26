@@ -73,7 +73,7 @@ make run FILE=README.md
 | `gg` | 先頭へ移動 |
 | `G` | 末尾へ移動 |
 | `/` | 検索入力を開始 |
-| `Enter` | 検索を確定、または選択中のリンクを開く |
+| `Enter` | 検索を確定、またはステータスバーに表示されたリンクを開く |
 | `Esc` | 検索またはリンク一覧を閉じる |
 | `n` | 次の検索結果へ移動 |
 | `N` | 前の検索結果へ移動 |
@@ -92,7 +92,7 @@ make run FILE=README.md
 
 Markdown の inline link を抽出します。
 
-動作確認には [リンクテストページ](docs/next.md) を使えます。
+動作確認には [link test page](docs/next.md) を使えます。
 
 ```md
 [Next](docs/next.md)

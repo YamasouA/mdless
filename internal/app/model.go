@@ -29,7 +29,7 @@ type Model struct {
 	Status               string
 	SearchInput          string
 	SearchQuery          string
-	Matches              []int
+	Matches              []SearchMatch
 	MatchIndex           int
 	LinkIndex            int
 	HeadingIndex         int
@@ -45,6 +45,12 @@ type Tab struct {
 	Page    render.Page
 	History nav.History
 	ScrollY int
+}
+
+type SearchMatch struct {
+	Line  int
+	Start int
+	End   int
 }
 
 func NewModel(page render.Page, loader PageLoader) Model {

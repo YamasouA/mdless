@@ -235,24 +235,28 @@ func (m *Model) clampScroll() {
 }
 
 func (m *Model) performSearch() {
-	m.Matches = nil
-	m.MatchIndex = 0
+	m.refreshSearchMatches()
 	if m.SearchQuery == "" {
 		m.Status = ""
 		return
-	}
-
-	for i, line := range m.currentTab().Page.Content {
-		if containsFoldPlain(line, m.SearchQuery) {
-			m.Matches = append(m.Matches, i)
-		}
 	}
 	if len(m.Matches) == 0 {
 		m.Status = "no matches"
 		return
 	}
-	m.scrollToLine(m.Matches[0])
+	m.scrollToLine(m.Matches[0].Line)
 	m.Status = fmt.Sprintf("%d/%d", 1, len(m.Matches))
+}
+
+func (m *Model) refreshSearchMatches() {
+	m.Matches = nil
+	m.MatchIndex = 0
+	if m.SearchQuery == "" {
+		return
+	}
+	for i, line := range m.currentTab().Page.Content {
+		m.Matches = append(m.Matches, findPlainMatches(i, line, m.SearchQuery)...)
+	}
 }
 
 func (m *Model) moveMatch(delta int) {
@@ -263,7 +267,7 @@ func (m *Model) moveMatch(delta int) {
 		return
 	}
 	m.MatchIndex = (m.MatchIndex + delta + len(m.Matches)) % len(m.Matches)
-	m.scrollToLine(m.Matches[m.MatchIndex])
+	m.scrollToLine(m.Matches[m.MatchIndex].Line)
 	m.Status = fmt.Sprintf("%d/%d", m.MatchIndex+1, len(m.Matches))
 }
 
@@ -436,6 +440,9 @@ func (m Model) handleWatchEvent(event watch.Event) (tea.Model, tea.Cmd) {
 		tab.ScrollY = clampScrollY(tab.ScrollY, len(tab.Page.Content), m.viewportHeight())
 		m.Tabs[i] = tab
 	}
+	if m.SearchQuery != "" {
+		m.refreshSearchMatches()
+	}
 
 	m.Status = "reloaded"
 	return m, m.watchPathCmd(event.Path)
@@ -465,8 +472,11 @@ func (m *Model) switchTab(delta int) {
 		m.Status = "no other tabs"
 		return
 	}
+	query := m.SearchQuery
 	m.CurrentTab = (m.CurrentTab + delta + len(m.Tabs)) % len(m.Tabs)
 	m.resetTransientState()
+	m.SearchQuery = query
+	m.refreshSearchMatches()
 }
 
 func (m *Model) closeCurrentTab() {
@@ -479,7 +489,10 @@ func (m *Model) closeCurrentTab() {
 	if m.CurrentTab >= len(m.Tabs) {
 		m.CurrentTab = len(m.Tabs) - 1
 	}
+	query := m.SearchQuery
 	m.resetTransientState()
+	m.SearchQuery = query
+	m.refreshSearchMatches()
 }
 
 func (m *Model) resetTransientState() {

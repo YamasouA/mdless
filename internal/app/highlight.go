@@ -6,9 +6,10 @@ import (
 )
 
 const (
-	ansiEscapeStart = '\x1b'
-	highlightStart  = "\x1b[7m"
-	highlightEnd    = "\x1b[0m"
+	ansiEscapeStart      = '\x1b'
+	highlightStart       = "\x1b[7m"
+	activeHighlightStart = "\x1b[1;30;43m"
+	highlightEnd         = "\x1b[0m"
 )
 
 func plainText(s string) string {
@@ -26,26 +27,22 @@ func plainText(s string) string {
 }
 
 func containsFoldPlain(line, query string) bool {
-	if query == "" {
-		return false
-	}
-	return strings.Contains(strings.ToLower(plainText(line)), strings.ToLower(query))
+	return len(findPlainMatches(0, line, query)) > 0
 }
 
-func highlightMatches(line, query string) string {
+func findPlainMatches(lineNo int, line, query string) []SearchMatch {
 	if query == "" {
-		return line
+		return nil
 	}
 
-	plain, plainToRaw := plainTextWithRawOffsets(line)
+	plain, _ := plainTextWithRawOffsets(line)
 	lowerPlain := strings.ToLower(plain)
 	lowerQuery := strings.ToLower(query)
 	if !strings.Contains(lowerPlain, lowerQuery) {
-		return line
+		return nil
 	}
 
-	var out strings.Builder
-	rawPos := 0
+	var matches []SearchMatch
 	searchPos := 0
 	for {
 		matchStart := strings.Index(lowerPlain[searchPos:], lowerQuery)
@@ -54,16 +51,39 @@ func highlightMatches(line, query string) string {
 		}
 		plainStart := searchPos + matchStart
 		plainEnd := plainStart + len(lowerQuery)
-		rawStart := plainToRaw[plainStart]
-		rawEnd := plainToRaw[plainEnd]
+		matches = append(matches, SearchMatch{
+			Line:  lineNo,
+			Start: plainStart,
+			End:   plainEnd,
+		})
+		searchPos = plainEnd
+	}
+	return matches
+}
+
+func highlightMatches(line string, matches []SearchMatch, activeIndex int) string {
+	if len(matches) == 0 {
+		return line
+	}
+
+	_, plainToRaw := plainTextWithRawOffsets(line)
+
+	var out strings.Builder
+	rawPos := 0
+	for i, match := range matches {
+		rawStart := plainToRaw[match.Start]
+		rawEnd := plainToRaw[match.End]
 
 		out.WriteString(line[rawPos:rawStart])
-		out.WriteString(highlightStart)
-		out.WriteString(line[rawStart:rawEnd])
+		if i == activeIndex {
+			out.WriteString(activeHighlightStart)
+		} else {
+			out.WriteString(highlightStart)
+		}
+		out.WriteString(plainText(line[rawStart:rawEnd]))
 		out.WriteString(highlightEnd)
 
 		rawPos = rawEnd
-		searchPos = plainEnd
 	}
 	out.WriteString(line[rawPos:])
 	return out.String()

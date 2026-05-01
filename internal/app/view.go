@@ -85,7 +85,13 @@ func (m Model) renderContent() string {
 	lines := append([]string(nil), tab.Page.Content[start:end]...)
 	if m.SearchQuery != "" && len(m.Matches) > 0 {
 		for i, line := range lines {
-			lines[i] = highlightMatches(line, m.SearchQuery)
+			lineNo := start + i
+			matches := matchesOnLine(m.Matches, lineNo)
+			activeIndex := -1
+			if m.MatchIndex >= 0 && m.MatchIndex < len(m.Matches) && m.Matches[m.MatchIndex].Line == lineNo {
+				activeIndex = indexOnLine(m.Matches, m.MatchIndex)
+			}
+			lines[i] = highlightMatches(line, matches, activeIndex)
 		}
 	}
 	for len(lines) < height {
@@ -100,6 +106,30 @@ func (m Model) renderContent() string {
 	}
 
 	return strings.Join(lines, "\n")
+}
+
+func matchesOnLine(matches []SearchMatch, line int) []SearchMatch {
+	var out []SearchMatch
+	for _, match := range matches {
+		if match.Line == line {
+			out = append(out, match)
+		}
+	}
+	return out
+}
+
+func indexOnLine(matches []SearchMatch, index int) int {
+	if index < 0 || index >= len(matches) {
+		return -1
+	}
+	line := matches[index].Line
+	active := 0
+	for i := 0; i < index; i++ {
+		if matches[i].Line == line {
+			active++
+		}
+	}
+	return active
 }
 
 func (m Model) renderLinks(height int) string {

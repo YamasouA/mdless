@@ -100,12 +100,62 @@ func TestRenderContentHighlightsSearchMatches(t *testing.T) {
 	m := testModel(render.Page{Path: "a.md", Content: []string{"target and Target"}})
 	m.Height = 3
 	m.SearchQuery = "target"
-	m.Matches = []int{0}
+	m.Matches = findPlainMatches(0, m.currentTab().Page.Content[0], m.SearchQuery)
 
 	body := m.renderContent()
 
-	if count := strings.Count(body, highlightStart); count != 2 {
-		t.Fatalf("highlight count = %d, want 2 in %q", count, body)
+	if count := strings.Count(body, highlightStart); count != 1 {
+		t.Fatalf("highlight count = %d, want 1 in %q", count, body)
+	}
+	if count := strings.Count(body, activeHighlightStart); count != 1 {
+		t.Fatalf("active highlight count = %d, want 1 in %q", count, body)
+	}
+}
+
+func TestNextMatchMovesActiveHighlight(t *testing.T) {
+	m := testModel(render.Page{Path: "a.md", Content: []string{"target target"}})
+	m.Height = 3
+
+	m = press(m, "/")
+	m = typeRunes(m, "target")
+	m = key(m, tea.KeyEnter)
+
+	body := m.renderContent()
+	if !strings.Contains(body, activeHighlightStart+"target"+highlightEnd+" "+highlightStart+"target"+highlightEnd) {
+		t.Fatalf("first match is not active: %q", body)
+	}
+
+	m = press(m, "n")
+	body = m.renderContent()
+	if !strings.Contains(body, highlightStart+"target"+highlightEnd+" "+activeHighlightStart+"target"+highlightEnd) {
+		t.Fatalf("second match is not active after n: %q", body)
+	}
+}
+
+func TestSwitchTabsKeepsSearchHighlightForCurrentTab(t *testing.T) {
+	m := NewModelWithPages([]render.Page{
+		{Path: "a.md", Content: []string{"target in first tab"}},
+		{Path: "b.md", Content: []string{"target in second tab"}},
+	}, func(path string) (render.Page, error) {
+		return render.Page{Path: path, Content: []string{path}}, nil
+	})
+	m.Height = 3
+
+	m = press(m, "/")
+	m = typeRunes(m, "target")
+	m = key(m, tea.KeyEnter)
+	m = pressSequence(m, "g", "t")
+
+	if got := m.SearchQuery; got != "target" {
+		t.Fatalf("SearchQuery = %q, want target", got)
+	}
+	if len(m.Matches) != 1 {
+		t.Fatalf("len(Matches) = %d, want 1", len(m.Matches))
+	}
+
+	body := m.renderContent()
+	if !strings.Contains(body, activeHighlightStart+"target"+highlightEnd) {
+		t.Fatalf("renderContent() does not highlight switched tab search query: %q", body)
 	}
 }
 
@@ -613,6 +663,26 @@ func TestWatchEventClampsScrollWhenReloadedFileShrinks(t *testing.T) {
 
 	if got := m.currentTab().ScrollY; got != 0 {
 		t.Fatalf("ScrollY = %d, want 0", got)
+	}
+}
+
+func TestWatchEventRefreshesSearchMatches(t *testing.T) {
+	m := NewModel(render.Page{Path: "a.md", Content: []string{"old"}}, func(string) (render.Page, error) {
+		return render.Page{Path: "a.md", Content: []string{"new target"}}, nil
+	})
+	m.Height = 3
+	m.SearchQuery = "target"
+	m.WatchedPaths["a.md"] = true
+
+	next, _ := m.Update(watch.Event{Path: "a.md"})
+	m = next.(Model)
+
+	if len(m.Matches) != 1 {
+		t.Fatalf("len(Matches) = %d, want 1", len(m.Matches))
+	}
+	body := m.renderContent()
+	if !strings.Contains(body, activeHighlightStart+"target"+highlightEnd) {
+		t.Fatalf("renderContent() does not highlight reloaded search match: %q", body)
 	}
 }
 

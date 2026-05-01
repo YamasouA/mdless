@@ -666,6 +666,42 @@ func TestWatchEventClampsScrollWhenReloadedFileShrinks(t *testing.T) {
 	}
 }
 
+func TestWatchEventRestoresScrollNearSameVisibleText(t *testing.T) {
+	m := NewModel(render.Page{Path: "a.md", Content: []string{
+		"# Intro",
+		"",
+		"intro text",
+		"",
+		"# API",
+		"read this section",
+		"details",
+	}}, func(string) (render.Page, error) {
+		return render.Page{Path: "a.md", Content: []string{
+			"# Changelog",
+			"new line",
+			"another line",
+			"",
+			"# Intro",
+			"",
+			"intro text",
+			"",
+			"# API",
+			"read this section",
+			"details",
+		}}, nil
+	})
+	m.Height = 5
+	m.Tabs[0].ScrollY = 4
+	m.WatchedPaths["a.md"] = true
+
+	next, _ := m.Update(watch.Event{Path: "a.md"})
+	m = next.(Model)
+
+	if got := m.currentTab().ScrollY; got != 8 {
+		t.Fatalf("ScrollY = %d, want 8", got)
+	}
+}
+
 func TestWatchEventRefreshesSearchMatches(t *testing.T) {
 	m := NewModel(render.Page{Path: "a.md", Content: []string{"old"}}, func(string) (render.Page, error) {
 		return render.Page{Path: "a.md", Content: []string{"new target"}}, nil

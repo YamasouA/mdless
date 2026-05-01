@@ -83,10 +83,13 @@ make run FILE=README.md
 | `gg` | Go to the top |
 | `G` | Go to the bottom |
 | `/` | Start search input |
-| `Enter` | Confirm search, or open the link shown in the status bar |
+| `Enter` | Confirm search, open the link shown in the status bar, or jump to the selected heading in the heading list |
 | `Esc` | Close search input or link list |
 | `n` | Go to the next search match |
 | `N` | Go to the previous search match |
+| `H` | Open the heading list |
+| `]h` | Go to the next heading |
+| `[h` | Go to the previous heading |
 | `o` | Open the link list |
 | `1`-`9` | Open the corresponding link in the link list |
 | `t` | Open a link in a new tab |
@@ -111,6 +114,12 @@ You can use the [link test page](docs/next.md) to try link navigation.
 Relative paths are resolved from the directory of the currently open Markdown file.
 
 External URLs are not opened in the current MVP.
+
+## Heading Navigation
+
+mdview extracts ATX headings (`#`, `##`, ...) and lets you move through the Markdown structure.
+
+Press `H` to open the heading list, use `j` / `k` to select a heading, and press `Enter` to jump. In the document view, `]h` jumps to the next heading and `[h` jumps to the previous heading.
 
 ## Live Reload
 

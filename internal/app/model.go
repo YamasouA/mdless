@@ -13,6 +13,7 @@ const (
 	ModeView Mode = iota
 	ModeSearch
 	ModeLinks
+	ModeHeadings
 )
 
 type PageLoader func(path string) (render.Page, error)
@@ -24,14 +25,16 @@ type Model struct {
 	Height     int
 	Ready      bool
 
-	Mode        Mode
-	Status      string
-	SearchInput string
-	SearchQuery string
-	Matches     []int
-	MatchIndex  int
-	LinkIndex   int
-	PendingG    bool
+	Mode                 Mode
+	Status               string
+	SearchInput          string
+	SearchQuery          string
+	Matches              []int
+	MatchIndex           int
+	LinkIndex            int
+	HeadingIndex         int
+	PendingG             bool
+	PendingHeadingPrefix string
 
 	LoadPage     PageLoader
 	LiveReload   bool

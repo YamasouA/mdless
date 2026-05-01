@@ -95,6 +95,9 @@ func (m Model) renderContent() string {
 	if m.Mode == ModeLinks {
 		return m.renderLinks(height)
 	}
+	if m.Mode == ModeHeadings {
+		return m.renderHeadings(height)
+	}
 
 	return strings.Join(lines, "\n")
 }
@@ -108,6 +111,25 @@ func (m Model) renderLinks(height int) string {
 			prefix = "> "
 		}
 		lines = append(lines, fmt.Sprintf("%s%d. %s -> %s", prefix, i+1, link.Text, link.Target))
+	}
+	if len(lines) > height {
+		lines = lines[:height]
+	}
+	for len(lines) < height {
+		lines = append(lines, "")
+	}
+	return strings.Join(lines, "\n")
+}
+
+func (m Model) renderHeadings(height int) string {
+	headings := m.currentTab().Page.Headings
+	lines := make([]string, 0, len(headings))
+	for i, heading := range headings {
+		prefix := "  "
+		if i == m.HeadingIndex {
+			prefix = "> "
+		}
+		lines = append(lines, fmt.Sprintf("%s%s %s", prefix, strings.Repeat("#", heading.Level), heading.Text))
 	}
 	if len(lines) > height {
 		lines = lines[:height]

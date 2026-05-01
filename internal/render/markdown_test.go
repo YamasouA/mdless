@@ -39,6 +39,35 @@ func TestExtractLinksIgnoresFencedCodeBlocks(t *testing.T) {
 	}
 }
 
+func TestExtractHeadings(t *testing.T) {
+	raw := "# Title\n\nbody\n### Details ###\n####### not heading\n#not heading\n"
+
+	headings := ExtractHeadings(raw)
+
+	if len(headings) != 2 {
+		t.Fatalf("len(headings) = %d, want 2", len(headings))
+	}
+	if headings[0].Text != "Title" || headings[0].Level != 1 || headings[0].Line != 0 {
+		t.Fatalf("headings[0] = %+v", headings[0])
+	}
+	if headings[1].Text != "Details" || headings[1].Level != 3 || headings[1].Line != 3 {
+		t.Fatalf("headings[1] = %+v", headings[1])
+	}
+}
+
+func TestExtractHeadingsIgnoresFencedCodeBlocks(t *testing.T) {
+	raw := "# Real\n\n```md\n## Example\n```\n"
+
+	headings := ExtractHeadings(raw)
+
+	if len(headings) != 1 {
+		t.Fatalf("len(headings) = %d, want 1", len(headings))
+	}
+	if headings[0].Text != "Real" || headings[0].Level != 1 {
+		t.Fatalf("headings[0] = %+v", headings[0])
+	}
+}
+
 func TestRenderMarkdownUsesGlamourDarkHeadingStyle(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "README.md")
@@ -92,6 +121,12 @@ func TestRenderMarkdown(t *testing.T) {
 	}
 	if len(page.Links) != 1 {
 		t.Fatalf("len(Links) = %d, want 1", len(page.Links))
+	}
+	if len(page.Headings) != 1 {
+		t.Fatalf("len(Headings) = %d, want 1", len(page.Headings))
+	}
+	if got := page.Headings[0].Text; got != "Hello" {
+		t.Fatalf("Headings[0].Text = %q, want Hello", got)
 	}
 }
 

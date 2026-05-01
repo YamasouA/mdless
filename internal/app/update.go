@@ -39,12 +39,27 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.handleSearchKey(msg), nil
 	case ModeLinks:
 		return m.handleLinksKey(msg)
+	case ModeHeadings:
+		return m.handleHeadingsKey(msg), nil
 	default:
 		return m.handleViewKey(msg)
 	}
 }
 
 func (m Model) handleViewKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.PendingHeadingPrefix != "" {
+		prefix := m.PendingHeadingPrefix
+		m.PendingHeadingPrefix = ""
+		if msg.String() == "h" {
+			if prefix == "]" {
+				m.moveHeading(1)
+			} else {
+				m.moveHeading(-1)
+			}
+		}
+		return m, nil
+	}
+
 	if m.PendingG {
 		m.PendingG = false
 		switch msg.String() {
@@ -85,6 +100,10 @@ func (m Model) handleViewKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.moveMatch(1)
 	case "N":
 		m.moveMatch(-1)
+	case "H":
+		m.openHeadingList()
+	case "]", "[":
+		m.PendingHeadingPrefix = msg.String()
 	case "o":
 		m.openLinkList()
 	case "enter":
@@ -99,6 +118,15 @@ func (m Model) handleViewKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.closeCurrentTab()
 	}
 	return m, nil
+}
+
+func (m *Model) openHeadingList() {
+	if len(m.currentTab().Page.Headings) == 0 {
+		m.Status = "no headings"
+		return
+	}
+	m.Mode = ModeHeadings
+	m.HeadingIndex = m.nearestHeadingIndex()
 }
 
 func (m *Model) openLinkList() {
@@ -160,6 +188,28 @@ func (m Model) handleLinksKey(msg tea.KeyMsg) (Model, tea.Cmd) {
 	return m, nil
 }
 
+func (m Model) handleHeadingsKey(msg tea.KeyMsg) Model {
+	headings := m.currentTab().Page.Headings
+	switch msg.Type {
+	case tea.KeyEsc:
+		m.Mode = ModeView
+	case tea.KeyEnter:
+		m.jumpToHeading(m.HeadingIndex)
+	case tea.KeyRunes:
+		switch string(msg.Runes) {
+		case "j":
+			if m.HeadingIndex < len(headings)-1 {
+				m.HeadingIndex++
+			}
+		case "k":
+			if m.HeadingIndex > 0 {
+				m.HeadingIndex--
+			}
+		}
+	}
+	return m
+}
+
 func (m *Model) scrollBy(delta int) {
 	tab := m.currentTab()
 	tab.ScrollY += delta
@@ -215,6 +265,62 @@ func (m *Model) moveMatch(delta int) {
 	m.MatchIndex = (m.MatchIndex + delta + len(m.Matches)) % len(m.Matches)
 	m.scrollToLine(m.Matches[m.MatchIndex])
 	m.Status = fmt.Sprintf("%d/%d", m.MatchIndex+1, len(m.Matches))
+}
+
+func (m *Model) moveHeading(delta int) {
+	headings := m.currentTab().Page.Headings
+	if len(headings) == 0 {
+		m.Status = "no headings"
+		return
+	}
+
+	current := m.currentTab().ScrollY
+	target := 0
+	if delta > 0 {
+		target = len(headings) - 1
+		for i, heading := range headings {
+			if heading.Line > current {
+				target = i
+				break
+			}
+		}
+	} else {
+		for i := len(headings) - 1; i >= 0; i-- {
+			if headings[i].Line < current {
+				target = i
+				break
+			}
+		}
+	}
+	m.jumpToHeading(target)
+}
+
+func (m *Model) jumpToHeading(index int) {
+	headings := m.currentTab().Page.Headings
+	if index < 0 || index >= len(headings) {
+		m.Status = "no headings"
+		return
+	}
+	m.HeadingIndex = index
+	m.scrollToLine(headings[index].Line)
+	m.Mode = ModeView
+	m.Status = fmt.Sprintf("heading: %s", headings[index].Text)
+}
+
+func (m Model) nearestHeadingIndex() int {
+	headings := m.currentTab().Page.Headings
+	if len(headings) == 0 {
+		return 0
+	}
+	current := m.currentTab().ScrollY
+	index := 0
+	for i, heading := range headings {
+		if heading.Line > current {
+			break
+		}
+		index = i
+	}
+	return index
 }
 
 func (m *Model) scrollToLine(line int) {
@@ -384,7 +490,9 @@ func (m *Model) resetTransientState() {
 	m.Matches = nil
 	m.MatchIndex = 0
 	m.LinkIndex = 0
+	m.HeadingIndex = 0
 	m.PendingG = false
+	m.PendingHeadingPrefix = ""
 }
 
 func halfPage(height int) int {

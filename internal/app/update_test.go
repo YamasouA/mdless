@@ -323,6 +323,73 @@ func TestEnterWithNoLinksShowsStatus(t *testing.T) {
 	}
 }
 
+func TestHOpensHeadingListAndEnterJumps(t *testing.T) {
+	m := testModel(render.Page{
+		Path:     "a.md",
+		Content:  lines(10),
+		Headings: []render.Heading{{Text: "Intro", Level: 1, Line: 0}, {Text: "Details", Level: 2, Line: 6}},
+	})
+	m.Height = 5
+
+	m = press(m, "H")
+	if got := m.Mode; got != ModeHeadings {
+		t.Fatalf("Mode = %v, want ModeHeadings", got)
+	}
+
+	m = press(m, "j")
+	m = key(m, tea.KeyEnter)
+
+	if got := m.Mode; got != ModeView {
+		t.Fatalf("Mode = %v, want ModeView", got)
+	}
+	if got := m.currentTab().ScrollY; got != 6 {
+		t.Fatalf("ScrollY = %d, want 6", got)
+	}
+}
+
+func TestHWithNoHeadingsShowsStatus(t *testing.T) {
+	m := testModel(render.Page{Path: "a.md", Content: []string{"home"}})
+
+	m = press(m, "H")
+
+	if got := m.Mode; got != ModeView {
+		t.Fatalf("Mode = %v, want ModeView", got)
+	}
+	if got := m.Status; got != "no headings" {
+		t.Fatalf("Status = %q, want no headings", got)
+	}
+}
+
+func TestHeadingNavigationJumpsNextAndPrevious(t *testing.T) {
+	m := testModel(render.Page{
+		Path:     "a.md",
+		Content:  lines(12),
+		Headings: []render.Heading{{Text: "Intro", Level: 1, Line: 0}, {Text: "Details", Level: 2, Line: 5}, {Text: "End", Level: 2, Line: 9}},
+	})
+	m.Height = 5
+	m.Tabs[0].ScrollY = 4
+
+	m = pressSequence(m, "]", "h")
+	if got := m.currentTab().ScrollY; got != 5 {
+		t.Fatalf("ScrollY after ]h = %d, want 5", got)
+	}
+
+	m = pressSequence(m, "[", "h")
+	if got := m.currentTab().ScrollY; got != 0 {
+		t.Fatalf("ScrollY after [h = %d, want 0", got)
+	}
+}
+
+func TestHeadingNavigationWithNoHeadingsShowsStatus(t *testing.T) {
+	m := testModel(render.Page{Path: "a.md", Content: lines(5)})
+
+	m = pressSequence(m, "]", "h")
+
+	if got := m.Status; got != "no headings" {
+		t.Fatalf("Status = %q, want no headings", got)
+	}
+}
+
 func TestOOpensLinkListInViewMode(t *testing.T) {
 	m := NewModel(render.Page{
 		Path:    "a.md",

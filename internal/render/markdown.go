@@ -11,12 +11,20 @@ import (
 )
 
 type Page struct {
-	Path    string
-	Content []string
-	Links   []nav.Link
+	Path     string
+	Content  []string
+	Links    []nav.Link
+	Headings []Heading
+}
+
+type Heading struct {
+	Text  string
+	Level int
+	Line  int
 }
 
 var inlineLinkPattern = regexp.MustCompile(`\[([^\]]+)\]\(([^)]+)\)`)
+var atxHeadingPattern = regexp.MustCompile(`^(#{1,6})[ \t]+(.+?)[ \t#]*$`)
 
 func RenderMarkdown(path string) (Page, error) {
 	raw, err := os.ReadFile(path)
@@ -30,9 +38,10 @@ func RenderMarkdown(path string) (Page, error) {
 	}
 
 	return Page{
-		Path:    path,
-		Content: strings.Split(strings.TrimRight(out, "\n"), "\n"),
-		Links:   ExtractLinks(string(raw)),
+		Path:     path,
+		Content:  strings.Split(strings.TrimRight(out, "\n"), "\n"),
+		Links:    ExtractLinks(string(raw)),
+		Headings: ExtractHeadings(string(raw)),
 	}, nil
 }
 
@@ -59,6 +68,37 @@ func ExtractLinks(raw string) []nav.Link {
 		}
 	}
 	return links
+}
+
+func ExtractHeadings(raw string) []Heading {
+	var headings []Heading
+	lines := strings.Split(raw, "\n")
+	inFence := false
+	for i, line := range lines {
+		if strings.HasPrefix(strings.TrimSpace(line), "```") {
+			inFence = !inFence
+			continue
+		}
+		if inFence {
+			continue
+		}
+
+		match := atxHeadingPattern.FindStringSubmatch(line)
+		if match == nil {
+			continue
+		}
+
+		text := strings.TrimSpace(match[2])
+		if text == "" {
+			continue
+		}
+		headings = append(headings, Heading{
+			Text:  text,
+			Level: len(match[1]),
+			Line:  i,
+		})
+	}
+	return headings
 }
 
 func ResolveTarget(currentPath, target string) string {

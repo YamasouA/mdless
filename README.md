@@ -1,6 +1,6 @@
-# mdless
+# mdview
 
-mdless は terminal-native な Markdown pager です。
+mdview は terminal-native な Markdown pager です。
 
 ブラウザやサーバーを使わず、ターミナル上で Markdown を読むための小さなツールを目指しています。
 
@@ -37,15 +37,21 @@ MVP として、次の機能を実装しています。
 このリポジトリを clone して build します。
 
 ```sh
-git clone https://github.com/YamasouA/mdless.git
-cd mdless
+git clone https://github.com/YamasouA/mdview.git
+cd mdview
 make build
 ```
 
-ビルドしたバイナリは `bin/mdless` に作成されます。
+ビルドしたバイナリは `bin/mdview` に作成されます。
 
 ```sh
-./bin/mdless README.md
+./bin/mdview README.md
+```
+
+複数ファイルを指定すると、それぞれ別タブで開きます。
+
+```sh
+./bin/mdview README.md README.en.md
 ```
 
 ## 使い方
@@ -54,6 +60,10 @@ make build
 
 ```sh
 go run . README.md
+```
+
+```sh
+go run . README.md README.en.md
 ```
 
 または Makefile 経由で実行できます。
@@ -129,13 +139,13 @@ make check
 | `make fmt-check` | 未整形の Go ファイルがないか確認 |
 | `make lint` | `go vet ./...` を実行 |
 | `make test` | `go test ./...` を実行 |
-| `make build` | `bin/mdless` をビルド |
+| `make build` | `bin/mdview` をビルド |
 | `make run FILE=...` | 指定ファイルを開いて実行 |
 | `make check` | `fmt-check`, `lint`, `test` をまとめて実行 |
 
 ## 設計
 
-mdless は Bubble Tea の MVU モデルを基本にしています。
+mdview は Bubble Tea の MVU モデルを基本にしています。
 
 - `cmd`: CLI
 - `internal/app`: TUI の Model / Update / View

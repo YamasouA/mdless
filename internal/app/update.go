@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/YamasouA/mdless/internal/nav"
-	"github.com/YamasouA/mdless/internal/render"
-	"github.com/YamasouA/mdless/internal/watch"
+	"github.com/YamasouA/mdview/internal/nav"
+	"github.com/YamasouA/mdview/internal/render"
+	"github.com/YamasouA/mdview/internal/watch"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/YamasouA/mdless/internal/nav"
+	"github.com/YamasouA/mdview/internal/nav"
 	"github.com/charmbracelet/glamour"
 )
 

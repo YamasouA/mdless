@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/YamasouA/mdless/internal/nav"
-	"github.com/YamasouA/mdless/internal/render"
-	"github.com/YamasouA/mdless/internal/watch"
+	"github.com/YamasouA/mdview/internal/nav"
+	"github.com/YamasouA/mdview/internal/render"
+	"github.com/YamasouA/mdview/internal/watch"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -146,6 +146,41 @@ func TestOpenLinkUpdatesPageAndHistory(t *testing.T) {
 	}
 	if got := len(m.currentTab().History.Entries); got != 2 {
 		t.Fatalf("history len = %d, want 2", got)
+	}
+}
+
+func TestOpenLinkKeepsOtherInitialTabs(t *testing.T) {
+	pages := map[string]render.Page{
+		"README.md": {
+			Path:    "README.md",
+			Content: []string{"readme"},
+			Links:   []nav.Link{{Text: "Next", Target: "docs/next.md"}},
+		},
+		"README.en.md": {Path: "README.en.md", Content: []string{"english"}},
+		"docs/next.md": {Path: "docs/next.md", Content: []string{"next"}},
+	}
+	m := NewModelWithPages([]render.Page{pages["README.md"], pages["README.en.md"]}, func(path string) (render.Page, error) {
+		return pages[path], nil
+	})
+	m.Width = 80
+
+	m = press(m, "enter")
+
+	if got := len(m.Tabs); got != 2 {
+		t.Fatalf("len(Tabs) = %d, want 2", got)
+	}
+	if got := m.Tabs[0].Page.Path; got != "docs/next.md" {
+		t.Fatalf("Tabs[0].Path = %q, want docs/next.md", got)
+	}
+	if got := m.Tabs[1].Page.Path; got != "README.en.md" {
+		t.Fatalf("Tabs[1].Path = %q, want README.en.md", got)
+	}
+
+	view := m.View()
+	for _, text := range []string{"1 next.md", "2 README.en.md", "tab 1/2"} {
+		if !strings.Contains(view, text) {
+			t.Fatalf("View() missing %q after opening link: %q", text, view)
+		}
 	}
 }
 

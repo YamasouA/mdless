@@ -1,6 +1,6 @@
-# mdless
+# mdview
 
-mdless is a terminal-native Markdown pager.
+mdview is a terminal-native Markdown pager.
 
 It is a small tool for reading Markdown directly in the terminal, without a browser or a server.
 
@@ -37,15 +37,21 @@ Session persistence is planned for a future release.
 Clone this repository and build the binary.
 
 ```sh
-git clone https://github.com/YamasouA/mdless.git
-cd mdless
+git clone https://github.com/YamasouA/mdview.git
+cd mdview
 make build
 ```
 
-The binary is created at `bin/mdless`.
+The binary is created at `bin/mdview`.
 
 ```sh
-./bin/mdless README.md
+./bin/mdview README.md
+```
+
+Pass multiple files to open them as separate tabs.
+
+```sh
+./bin/mdview README.md README.en.md
 ```
 
 ## Usage
@@ -54,6 +60,10 @@ Pass the Markdown file you want to open.
 
 ```sh
 go run . README.md
+```
+
+```sh
+go run . README.md README.en.md
 ```
 
 You can also run it through the Makefile.
@@ -90,7 +100,7 @@ make run FILE=README.md
 
 ## Link Navigation
 
-mdless extracts inline Markdown links.
+mdview extracts inline Markdown links.
 
 You can use the [link test page](docs/next.md) to try link navigation.
 
@@ -104,7 +114,7 @@ External URLs are not opened in the current MVP.
 
 ## Live Reload
 
-When an open Markdown file changes, mdless automatically reloads it.
+When an open Markdown file changes, mdview automatically reloads it.
 
 If the same file is open in multiple tabs, all matching tabs are updated together. Each tab keeps its scroll position after reload.
 
@@ -129,13 +139,13 @@ Main targets:
 | `make fmt-check` | Check whether any Go files are unformatted |
 | `make lint` | Run `go vet ./...` |
 | `make test` | Run `go test ./...` |
-| `make build` | Build `bin/mdless` |
-| `make run FILE=...` | Run mdless with the specified file |
+| `make build` | Build `bin/mdview` |
+| `make run FILE=...` | Run mdview with the specified file |
 | `make check` | Run `fmt-check`, `lint`, and `test` |
 
 ## Design
 
-mdless is built around Bubble Tea's MVU model.
+mdview is built around Bubble Tea's MVU model.
 
 - `cmd`: CLI
 - `internal/app`: TUI Model / Update / View

@@ -1,4 +1,4 @@
-BINARY := mdless
+BINARY := mdview
 BUILD_DIR := bin
 MAIN_PKG := .
 GO_PACKAGES := ./...
@@ -11,8 +11,8 @@ help:
 	@printf '  %-10s %s\n' 'fmt' 'Format Go files with gofmt'
 	@printf '  %-10s %s\n' 'fmt-check' 'Check Go formatting without modifying files'
 	@printf '  %-10s %s\n' 'test' 'Run all tests'
-	@printf '  %-10s %s\n' 'build' 'Build the mdless binary into bin/'
-	@printf '  %-10s %s\n' 'run' 'Run mdless; pass FILE=path/to/file.md'
+	@printf '  %-10s %s\n' 'build' 'Build the mdview binary into bin/'
+	@printf '  %-10s %s\n' 'run' 'Run mdview; pass FILE=path/to/file.md'
 	@printf '  %-10s %s\n' 'check' 'Run fmt-check, lint, and test'
 	@printf '  %-10s %s\n' 'clean' 'Remove build artifacts'
 

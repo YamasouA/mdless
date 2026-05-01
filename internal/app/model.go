@@ -1,9 +1,9 @@
 package app
 
 import (
-	"github.com/YamasouA/mdless/internal/nav"
-	"github.com/YamasouA/mdless/internal/render"
-	"github.com/YamasouA/mdless/internal/watch"
+	"github.com/YamasouA/mdview/internal/nav"
+	"github.com/YamasouA/mdview/internal/render"
+	"github.com/YamasouA/mdview/internal/watch"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -45,13 +45,19 @@ type Tab struct {
 }
 
 func NewModel(page render.Page, loader PageLoader) Model {
+	return NewModelWithPages([]render.Page{page}, loader)
+}
+
+func NewModelWithPages(pages []render.Page, loader PageLoader) Model {
+	tabs := make([]Tab, 0, len(pages))
+	for _, page := range pages {
+		tabs = append(tabs, Tab{
+			Page:    page,
+			History: nav.NewHistory(nav.HistoryEntry{Path: page.Path}),
+		})
+	}
 	return Model{
-		Tabs: []Tab{
-			{
-				Page:    page,
-				History: nav.NewHistory(nav.HistoryEntry{Path: page.Path}),
-			},
-		},
+		Tabs:         tabs,
 		LoadPage:     loader,
 		LiveReload:   true,
 		WatchedPaths: make(map[string]bool),

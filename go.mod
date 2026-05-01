@@ -1,4 +1,4 @@
-module github.com/YamasouA/mdless
+module github.com/YamasouA/mdview
 
 go 1.26.1
 

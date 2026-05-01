@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/YamasouA/mdless/internal/ui"
+	"github.com/YamasouA/mdview/internal/ui"
 	"github.com/charmbracelet/lipgloss"
 )
 

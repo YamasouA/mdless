@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/YamasouA/mdview/internal/nav"
@@ -354,6 +355,13 @@ func (m *Model) openLink(index int, newTab bool) tea.Cmd {
 	}
 
 	target := render.ResolveTarget(tab.Page.Path, link.Target)
+	if newTab {
+		if index := m.findTabByPath(target); index >= 0 {
+			m.switchToTab(index, "switched to existing tab")
+			return nil
+		}
+	}
+
 	page, err := m.LoadPage(target)
 	if err != nil {
 		m.Status = err.Error()
@@ -382,6 +390,28 @@ func (m *Model) openLink(index int, newTab bool) tea.Cmd {
 	m.Matches = nil
 	m.MatchIndex = 0
 	return m.watchPathCmd(page.Path)
+}
+
+func (m *Model) findTabByPath(path string) int {
+	cleanPath := filepath.Clean(path)
+	for i, tab := range m.Tabs {
+		if filepath.Clean(tab.Page.Path) == cleanPath {
+			return i
+		}
+	}
+	return -1
+}
+
+func (m *Model) switchToTab(index int, status string) {
+	if index < 0 || index >= len(m.Tabs) {
+		return
+	}
+	query := m.SearchQuery
+	m.CurrentTab = index
+	m.resetTransientState()
+	m.SearchQuery = query
+	m.refreshSearchMatches()
+	m.Status = status
 }
 
 func (m *Model) goHistory(direction int) tea.Cmd {
@@ -473,11 +503,7 @@ func (m *Model) switchTab(delta int) {
 		m.Status = "no other tabs"
 		return
 	}
-	query := m.SearchQuery
-	m.CurrentTab = (m.CurrentTab + delta + len(m.Tabs)) % len(m.Tabs)
-	m.resetTransientState()
-	m.SearchQuery = query
-	m.refreshSearchMatches()
+	m.switchToTab((m.CurrentTab+delta+len(m.Tabs))%len(m.Tabs), "")
 }
 
 func (m *Model) closeCurrentTab() {

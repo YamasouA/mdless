@@ -92,7 +92,7 @@ make run FILE=README.md
 | `[h` | Go to the previous heading |
 | `o` | Open the link list |
 | `1`-`9` | Open the corresponding link in the link list |
-| `t` | Open a link in a new tab |
+| `t` | Open a link in a new tab, or switch to an existing tab |
 | `b` | Go back in history |
 | `f` | Go forward in history |
 | `gt` | Go to the next tab |
@@ -115,7 +115,9 @@ Relative paths are resolved from the directory of the currently open Markdown fi
 
 `Enter` opens the link shown in the status bar in the current tab. In the document body, the line containing the Enter target is marked with `enter>`.
 
-`o` opens the link list. In the link list, use `j` / `k` to select a link and `Enter` to open it in the current tab. `t` opens the status-bar link or the selected link-list item in a new tab.
+`o` opens the link list. In the link list, use `j` / `k` to select a link and `Enter` to open it in the current tab. `t` opens the status-bar link or the selected link-list item in a new tab. If the target file is already open, mdview switches to that tab instead of creating a duplicate.
+
+`gt` / `gT` switch to the next or previous tab. `x` closes the current tab and selects the tab to the right when one exists, otherwise the tab to the left. The last remaining tab cannot be closed.
 
 External URLs are not opened in the current MVP.
 

@@ -505,6 +505,40 @@ func TestOpenLinkInNewTab(t *testing.T) {
 	}
 }
 
+func TestOpenLinkInNewTabSwitchesToExistingTab(t *testing.T) {
+	loads := 0
+	m := NewModelWithPages([]render.Page{
+		{
+			Path:    "a.md",
+			Content: []string{"home"},
+			Links:   []nav.Link{{Text: "Next", Target: "next.md"}},
+		},
+		{Path: "next.md", Content: []string{"next"}},
+	}, func(path string) (render.Page, error) {
+		loads++
+		return render.Page{Path: path, Content: []string{path}}, nil
+	})
+	m.Tabs[1].ScrollY = 3
+
+	m = press(m, "t")
+
+	if loads != 0 {
+		t.Fatalf("loads = %d, want 0", loads)
+	}
+	if got := len(m.Tabs); got != 2 {
+		t.Fatalf("len(Tabs) = %d, want 2", got)
+	}
+	if got := m.CurrentTab; got != 1 {
+		t.Fatalf("CurrentTab = %d, want 1", got)
+	}
+	if got := m.currentTab().ScrollY; got != 3 {
+		t.Fatalf("ScrollY = %d, want 3", got)
+	}
+	if got := m.Status; got != "switched to existing tab" {
+		t.Fatalf("Status = %q, want switched to existing tab", got)
+	}
+}
+
 func TestOpenLinkInNewTabFromLinkList(t *testing.T) {
 	pages := map[string]render.Page{
 		"a.md": {
@@ -603,6 +637,26 @@ func TestCloseCurrentTab(t *testing.T) {
 	}
 	if got := m.currentTab().Page.Path; got != "c.md" {
 		t.Fatalf("current path = %q, want c.md", got)
+	}
+}
+
+func TestCloseLastTabSelectsPreviousTab(t *testing.T) {
+	m := testModel(render.Page{Path: "a.md", Content: []string{"a"}})
+	m.Tabs = append(m.Tabs,
+		Tab{Page: render.Page{Path: "b.md", Content: []string{"b"}}, History: nav.NewHistory(nav.HistoryEntry{Path: "b.md"})},
+	)
+	m.CurrentTab = 1
+
+	m = press(m, "x")
+
+	if got := len(m.Tabs); got != 1 {
+		t.Fatalf("len(Tabs) = %d, want 1", got)
+	}
+	if got := m.CurrentTab; got != 0 {
+		t.Fatalf("CurrentTab = %d, want 0", got)
+	}
+	if got := m.currentTab().Page.Path; got != "a.md" {
+		t.Fatalf("current path = %q, want a.md", got)
 	}
 }
 

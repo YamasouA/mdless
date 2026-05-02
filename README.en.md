@@ -113,6 +113,10 @@ You can use the [link test page](docs/next.md) to try link navigation.
 
 Relative paths are resolved from the directory of the currently open Markdown file.
 
+`Enter` opens the link shown in the status bar in the current tab. In the document body, the line containing the Enter target is marked with `enter>`.
+
+`o` opens the link list. In the link list, use `j` / `k` to select a link and `Enter` to open it in the current tab. `t` opens the status-bar link or the selected link-list item in a new tab.
+
 External URLs are not opened in the current MVP.
 
 ## Heading Navigation

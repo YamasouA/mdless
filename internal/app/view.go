@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/YamasouA/mdview/internal/render"
 	"github.com/YamasouA/mdview/internal/ui"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -94,6 +95,9 @@ func (m Model) renderContent() string {
 			lines[i] = highlightMatches(line, matches, activeIndex)
 		}
 	}
+	if m.Mode == ModeView {
+		m.markEnterLinkLine(lines, start)
+	}
 	for len(lines) < height {
 		lines = append(lines, "")
 	}
@@ -106,6 +110,18 @@ func (m Model) renderContent() string {
 	}
 
 	return strings.Join(lines, "\n")
+}
+
+func (m Model) markEnterLinkLine(lines []string, start int) {
+	links := m.currentTab().Page.Links
+	if len(links) == 0 {
+		return
+	}
+	line := links[0].Line
+	if line < start || line >= start+len(lines) {
+		return
+	}
+	lines[line-start] = "enter> " + lines[line-start]
 }
 
 func matchesOnLine(matches []SearchMatch, line int) []SearchMatch {
@@ -140,7 +156,8 @@ func (m Model) renderLinks(height int) string {
 		if i == m.LinkIndex {
 			prefix = "> "
 		}
-		lines = append(lines, fmt.Sprintf("%s%d. %s -> %s", prefix, i+1, link.Text, link.Target))
+		resolved := render.ResolveTarget(m.currentTab().Page.Path, link.Target)
+		lines = append(lines, fmt.Sprintf("%s%d. line %d | %s -> %s | resolved: %s", prefix, i+1, link.Line+1, link.Text, link.Target, resolved))
 	}
 	if len(lines) > height {
 		lines = lines[:height]

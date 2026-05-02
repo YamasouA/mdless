@@ -340,6 +340,23 @@ func TestViewShowsEnterLinkTarget(t *testing.T) {
 	}
 }
 
+func TestViewMarksEnterLinkLineInBody(t *testing.T) {
+	m := NewModel(render.Page{
+		Path:    "a.md",
+		Content: []string{"intro", "See Next", "tail"},
+		Links:   []nav.Link{{Text: "Next", Target: "next.md", Line: 1}},
+	}, func(path string) (render.Page, error) {
+		return render.Page{Path: path, Content: []string{path}}, nil
+	})
+	m.Height = 5
+
+	body := m.renderContent()
+
+	if !strings.Contains(body, "enter> See Next") {
+		t.Fatalf("renderContent() does not mark enter link line: %q", body)
+	}
+}
+
 func TestViewKeepsEnterLinkTargetAfterReloadStatus(t *testing.T) {
 	m := NewModel(render.Page{
 		Path:    "a.md",
@@ -514,6 +531,30 @@ func TestOpenLinkInNewTabFromLinkList(t *testing.T) {
 	}
 	if got := m.currentTab().Page.Path; got != "two.md" {
 		t.Fatalf("current path = %q, want two.md", got)
+	}
+}
+
+func TestRenderLinksShowsSelectionLineTargetAndResolvedPath(t *testing.T) {
+	m := NewModel(render.Page{
+		Path:    "docs/current.md",
+		Content: []string{"home"},
+		Links: []nav.Link{
+			{Text: "One", Target: "one.md", Line: 0},
+			{Text: "Two", Target: "../two.md", Line: 3},
+		},
+	}, func(path string) (render.Page, error) {
+		return render.Page{Path: path, Content: []string{path}}, nil
+	})
+	m.Height = 5
+	m = press(m, "o")
+	m = press(m, "j")
+
+	body := m.renderContent()
+
+	for _, want := range []string{"> 2.", "line 4", "Two -> ../two.md", "resolved: two.md"} {
+		if !strings.Contains(body, want) {
+			t.Fatalf("renderContent() missing %q in link list: %q", want, body)
+		}
 	}
 }
 
